@@ -116,10 +116,12 @@ export default function ImageDetailSlide({ slide, step }) {
   }
 
   // Layout simple (sin bullets)
+  const hasLabel = !!slide.label
   return (
     <div style={{
-      width: '100%', maxWidth: 900,
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20,
+      width: '100%', maxWidth: hasLabel ? 900 : 1400,
+      height: '100%',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: hasLabel ? 20 : 12,
     }}>
       <motion.h2
         initial={{ opacity: 0, y: -10 }}
@@ -128,7 +130,7 @@ export default function ImageDetailSlide({ slide, step }) {
         style={{
           fontFamily: FONT, fontSize: 72, fontWeight: 700, letterSpacing: 0,
           color: '#1C4DC1', textTransform: 'uppercase', margin: 0,
-          alignSelf: 'flex-start',
+          alignSelf: 'flex-start', flexShrink: 0,
         }}
       >
         {slide.section}
@@ -140,15 +142,17 @@ export default function ImageDetailSlide({ slide, step }) {
         transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
         style={{
           width: '100%',
-          border: '1px solid rgba(0,32,96,0.1)',
-          borderRadius: 16, overflow: 'hidden',
-          boxShadow: '0 8px 48px rgba(0,32,96,0.12)',
+          flex: hasLabel ? undefined : 1,
+          minHeight: 0,
+          border: hasLabel ? '1px solid rgba(0,32,96,0.1)' : 'none',
+          borderRadius: hasLabel ? 16 : 0, overflow: 'hidden',
+          boxShadow: hasLabel ? '0 8px 48px rgba(0,32,96,0.12)' : 'none',
         }}
       >
         <img
           src={slide.src}
           alt={slide.label}
-          style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: 460 }}
+          style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain', maxHeight: hasLabel ? 460 : undefined }}
         />
       </motion.div>
 
@@ -157,7 +161,7 @@ export default function ImageDetailSlide({ slide, step }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.25 }}
-          style={{ borderLeft: '3px solid #1C4DC1', paddingLeft: 10, alignSelf: 'flex-start' }}
+          style={{ borderLeft: '3px solid #1C4DC1', paddingLeft: 10, alignSelf: 'flex-start', flexShrink: 0 }}
         >
           <span style={{ fontFamily: FONT, fontSize: 16, fontWeight: 500, color: '#0a1628' }}>
             Fuente: {slide.source}
@@ -165,14 +169,16 @@ export default function ImageDetailSlide({ slide, step }) {
         </motion.div>
       )}
 
-      <motion.span
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-        style={{ fontFamily: FONT, fontSize: 54, fontWeight: 700, color: '#0a1628', textAlign: 'center' }}
-      >
-        {slide.label}
-      </motion.span>
+      {hasLabel && (
+        <motion.span
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          style={{ fontFamily: FONT, fontSize: 54, fontWeight: 700, color: '#0a1628', textAlign: 'center' }}
+        >
+          {slide.label}
+        </motion.span>
+      )}
     </div>
   )
 }

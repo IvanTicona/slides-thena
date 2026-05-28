@@ -392,6 +392,24 @@ export const slides = [
     ],
   },
 
+  // ── 13b. C4 - Contexto del Sistema ──────────────────────────────────────────
+  {
+    id: 'c4-context',
+    type: 'image-detail',
+    steps: 0,
+    section: 'DIAGRAMA C4',
+    src: '/ThenaSystemContext.png',
+  },
+
+  // ── 13c. C4 - Contenedores ───────────────────────────────────────────────────
+  {
+    id: 'c4-containers',
+    type: 'image-detail',
+    steps: 0,
+    section: 'DIAGRAMA C4',
+    src: '/ThenaContainers.png',
+  },
+
   // ── 13. ANÁLISIS DE REQUERIMIENTOS - Flujo ──────────────────────────────────
   {
     id: 'requerimientos',
