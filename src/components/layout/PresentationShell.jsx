@@ -1,3 +1,4 @@
+import React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigation } from '../../hooks/useNavigation'
 import { useFullscreen } from '../../hooks/useFullscreen'
@@ -54,13 +55,45 @@ export default function PresentationShell() {
   const nav = useNavigation(slides)
   const { toggle: toggleFS } = useFullscreen()
   const current = slides[nav.slideIndex]
+  const slideAreaRef = React.useRef(null)
+  const [exporting, setExporting] = React.useState(false)
+  const [exportProgress, setExportProgress] = React.useState(0)
+
   if (!current) return null
   const SlideContent = REGISTRY[current.type]
 
+  async function exportPDF() {
+    if (exporting) return
+    setExporting(true)
+    setExportProgress(0)
+
+    const { jsPDF } = await import('jspdf')
+    const html2canvas = (await import('html2canvas')).default
+
+    const el = slideAreaRef.current
+    const { width, height } = el.getBoundingClientRect()
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [width, height] })
+
+    for (let i = 0; i < slides.length; i++) {
+      nav.goTo(i, slides[i].steps ?? 0)
+      await new Promise(r => setTimeout(r, 700))
+
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true, logging: false })
+      if (i > 0) pdf.addPage()
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, width, height)
+      setExportProgress(Math.round((i + 1) / slides.length * 100))
+    }
+
+    pdf.save('thena-slides.pdf')
+    nav.goTo(0, 0)
+    setExporting(false)
+    setExportProgress(0)
+  }
+
   return (
     <div
-      style={{ position: 'fixed', inset: 0, cursor: 'pointer' }}
-      onClick={nav.next}
+      style={{ position: 'fixed', inset: 0, cursor: exporting ? 'wait' : 'pointer' }}
+      onClick={exporting ? undefined : nav.next}
     >
       {/* Slide area — 16:9 centered */}
       <div style={{
@@ -68,13 +101,16 @@ export default function PresentationShell() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: '#e8edf5',
       }}>
-        <div style={{
-          position: 'relative',
-          width: '100%', height: '100%',
-          maxWidth: 'min(100vw, calc(100vh * 16/9))',
-          maxHeight: 'min(100vh, calc(100vw * 9/16))',
-          overflow: 'hidden',
-        }}>
+        <div
+          ref={slideAreaRef}
+          style={{
+            position: 'relative',
+            width: '100%', height: '100%',
+            maxWidth: 'min(100vw, calc(100vh * 16/9))',
+            maxHeight: 'min(100vh, calc(100vw * 9/16))',
+            overflow: 'hidden',
+          }}
+        >
           <AnimatePresence mode="wait">
             <Slide key={current.id} slide={current}>
               {SlideContent && <SlideContent slide={current} step={nav.step} />}
@@ -110,30 +146,57 @@ export default function PresentationShell() {
         <NavBtn onClick={nav.prev} label="‹" />
         <NavBtn onClick={nav.next} label="›" />
         <NavBtn onClick={toggleFS} label="⛶" />
+        <NavBtn onClick={exportPDF} label="PDF" disabled={exporting} />
       </div>
 
       {/* Keyboard hint — fades after 3s */}
       <KeyboardHint />
+
+      {/* Export progress overlay */}
+      {exporting && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 999,
+          background: 'rgba(0,12,40,0.75)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 20,
+        }}>
+          <span style={{ color: '#fff', fontSize: 18, fontFamily: 'system-ui', letterSpacing: 1 }}>
+            Exportando PDF... {exportProgress}%
+          </span>
+          <div style={{ width: 320, height: 6, background: 'rgba(255,255,255,0.15)', borderRadius: 4 }}>
+            <div style={{
+              height: '100%', borderRadius: 4,
+              background: 'linear-gradient(90deg, #6D9EEB, #D90368)',
+              width: `${exportProgress}%`, transition: 'width 0.3s',
+            }} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function NavBtn({ onClick, label }) {
+function NavBtn({ onClick, label, disabled }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       style={{
-        width: 36, height: 36,
-        background: 'rgba(255,255,255,0.85)',
+        width: label === 'PDF' ? 48 : 36, height: 36,
+        background: disabled ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.85)',
         border: '1px solid rgba(0,32,96,0.15)',
         borderRadius: 8, color: '#002060',
-        fontSize: 18, cursor: 'pointer',
+        fontSize: label === 'PDF' ? 12 : 18,
+        fontWeight: label === 'PDF' ? 700 : 400,
+        fontFamily: label === 'PDF' ? 'system-ui' : 'inherit',
+        cursor: disabled ? 'wait' : 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         backdropFilter: 'blur(10px)',
         transition: 'background 0.2s',
+        letterSpacing: label === 'PDF' ? 1 : 0,
       }}
-      onMouseEnter={e => e.target.style.background = 'rgba(109,158,235,0.25)'}
-      onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.85)'}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'rgba(109,158,235,0.25)' }}
+      onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = 'rgba(255,255,255,0.85)' }}
     >
       {label}
     </button>

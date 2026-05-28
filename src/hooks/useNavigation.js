@@ -29,10 +29,10 @@ export function useNavigation(slides) {
     }
   }, [step, slideIndex, slides])
 
-  const goTo = useCallback((index) => {
+  const goTo = useCallback((index, stepOverride = 0) => {
     setDirection(index > slideIndex ? 1 : -1)
     setSlideIndex(index)
-    setStep(0)
+    setStep(stepOverride)
   }, [slideIndex])
 
   useEffect(() => {

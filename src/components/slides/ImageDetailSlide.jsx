@@ -101,7 +101,7 @@ export default function ImageDetailSlide({ slide, step }) {
             <motion.div
               key={i}
               initial={{ opacity: 0, x: 20 }}
-              animate={step > i ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+              animate={slide.steps === 0 || step > i ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
               style={{ borderLeft: '3px solid #1C4DC1', paddingLeft: 12 }}
             >
